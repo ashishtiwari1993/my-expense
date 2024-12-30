@@ -80,7 +80,11 @@ class Loader:
             },
             "aggs": {
                 "expense_per_month": {
-                    "date_histogram": {"field": "date", "calendar_interval": "week"},
+                    "date_histogram": {
+                        "field": "date",
+                        "calendar_interval": "week",
+                        "format": "yyyy-MM-dd",
+                    },
                     "aggs": {
                         "expense_amount": {"sum": {"field": "transaction_amount"}}
                     },

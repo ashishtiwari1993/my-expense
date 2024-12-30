@@ -40,7 +40,7 @@ with st.form("filters"):
 statement_dir = str(pathlib.Path().resolve()) + "/statements/"
 
 upload, txn, summary, ask = st.tabs(
-    ["Upload statement", "Transactions", "Summary report", "Ask"]
+    ["Upload statement", "Transactions", "Report", "Ask"]
 )
 
 p = Parser()
@@ -115,8 +115,32 @@ with txn:
     st.table(df.iloc[:, -4:])
 
 with summary:
-    st.header("Summary")
-    st.image("https://static.streamlit.io/examples/dog.jpg")
+
+    reports = l.reports(date_range=[start_date, end_date])
+
+    expense_per_month = []
+    expense_count = []
+    expense_per_category = []
+
+    reports_expense_pm = reports["aggregations"]["expense_per_month"]["buckets"]
+    reports_expense_pc = reports["aggregations"]["expense_per_category"]["buckets"]
+
+    if reports_expense_pm:
+
+        for pm in reports_expense_pm:
+            expense_per_month.append(
+                {"date": pm["key_as_string"], "amount": pm["expense_amount"]["value"]}
+            )
+            expense_count.append(
+                {"date": pm["key_as_string"], "count": pm["doc_count"]}
+            )
+
+    st.title("Total Expense (Weekly)")
+    st.line_chart(pd.DataFrame(expense_per_month).set_index("date"))
+
+    st.title("Total Transactions (Weekly)")
+    st.line_chart(pd.DataFrame(expense_count).set_index("date"))
+
 with ask:
     st.header("ask")
     st.image("https://static.streamlit.io/examples/owl.jpg")
