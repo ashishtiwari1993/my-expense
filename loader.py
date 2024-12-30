@@ -61,3 +61,37 @@ class Loader:
             body=q,
         )
         return resp
+
+    def reports(self, date_range=[]):
+
+        q = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "filter": [
+                        {
+                            "range": {
+                                "date": {"gte": date_range[0], "lte": date_range[1]}
+                            }
+                        }
+                    ],
+                }
+            },
+            "aggs": {
+                "expense_per_month": {
+                    "date_histogram": {"field": "date", "calendar_interval": "week"},
+                    "aggs": {
+                        "expense_amount": {"sum": {"field": "transaction_amount"}}
+                    },
+                },
+                "expense_per_category": {
+                    "terms": {"field": "category.keyword"},
+                    "aggs": {"total_expense": {"sum": {"field": "transaction_amount"}}},
+                },
+            },
+        }
+
+        resp = self.es.search(index="my-expense", body=q)
+
+        return resp
