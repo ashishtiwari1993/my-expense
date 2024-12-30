@@ -6,9 +6,11 @@ import streamlit as st
 from st_keyup import st_keyup
 import datetime
 from datetime import timedelta
-import os
+import os, yaml
 from io import StringIO
 
+with open("./config/config.yml", "r") as file:
+    config = yaml.safe_load(file)
 
 with st.form("filters"):
     with st.sidebar:
@@ -58,7 +60,10 @@ with upload:
             with open(save_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
-            p.run(statement=statement_dir + uploaded_file.name, password="385185986")
+            p.run(
+                statement=statement_dir + uploaded_file.name,
+                password=config["pdf"]["password"],
+            )
 
         st.success("Parsing complete!")
 
