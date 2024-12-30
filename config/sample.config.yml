@@ -1,0 +1,7 @@
+elastic:
+  cloud_id: elastic-at:dXMtd2VzdDIuZ2NwLmVsYXN0aWMtY2xvdWQuY29tOjQ0MyRiOWRjNTI3YzI4Zjk0YTNmODNkYjVhMzg3YTczMDU5YiQzNjI4OGViNTNiNzU0MThkYmNhYWRhZTU5MmJjNTI5Mw==
+  api_key: a1ZpY0Q1TUJyVEVzYVRlU19mZkU6Si1odFVMVGlROC1mdG84dVhhSWFuZw== 
+
+ollama:
+  base_url: http://localhost:11434
+  model: llama3.1:8b
