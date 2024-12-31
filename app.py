@@ -1,5 +1,6 @@
 from parser import Parser
 from loader import Loader
+from ask import Ask
 import pandas as pd
 import pathlib
 import streamlit as st
@@ -8,6 +9,7 @@ import datetime
 from datetime import timedelta
 import os, yaml
 from io import StringIO
+import time
 
 with open("./config/config.yml", "r") as file:
     config = yaml.safe_load(file)
@@ -45,7 +47,7 @@ upload, txn, summary, ask = st.tabs(
 
 p = Parser()
 l = Loader()
-
+a = Ask()
 
 with upload:
 
@@ -96,12 +98,14 @@ with txn:
             if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
                 selected_others.append(str(obj["key"]))
 
-    data = l.load(
-        search=search_query,
-        date_range=[start_date, end_date],
-        categories=selected_categories,
-        others=selected_others,
-    )
+    if selected_categories or selected_others:
+
+        data = l.load(
+            search=search_query,
+            date_range=[start_date, end_date],
+            categories=selected_categories,
+            others=selected_others,
+        )
 
     text = "Found:" + str(data["hits"]["total"]["value"])
     total_expense_text = "Expense INR ~ " + str(
@@ -142,5 +146,28 @@ with summary:
     st.line_chart(pd.DataFrame(expense_count).set_index("date"))
 
 with ask:
+
     st.header("ask")
-    st.image("https://static.streamlit.io/examples/owl.jpg")
+
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Accept user input
+    if prompt := st.chat_input("What is up?"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            response = st.write_stream(a.generator(prompt))
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})

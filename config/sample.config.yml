@@ -1,10 +1,18 @@
 elastic:
-  cloud_id: elastic_cloud_id
-  api_key: elastic_api_key
+  cloud_id: "cloud_id"
+  api_key: "elasticsearch_api_key"
+  index_name: "my-expense"
 
 ollama:
-  base_url: http://localhost:11434
-  model: llama3.1:8b
+  base_url: "http://localhost:11434"
+  model: "llama3.1:8b"
 
 pdf:
   password: "pdf_password"
+
+open_ai:
+  api_key: "openai_api_key"
+  model: "gpt-4o"
+
+tavily:
+  api_key: "taviliy_api_key"

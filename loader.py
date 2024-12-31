@@ -17,7 +17,7 @@ class Loader:
 
     def load(self, search="", date_range=[], categories=[], others=[]):
 
-        print("search received -" + search)
+        # print("search received -" + search)
 
         q = {
             "size": 30,
@@ -96,6 +96,6 @@ class Loader:
             },
         }
 
-        resp = self.es.search(index="my-expense", body=q)
+        resp = self.es.search(index=self._config["elastic"]["index_name"], body=q)
 
         return resp
