@@ -19,46 +19,97 @@ class Loader:
 
         # print("search received -" + search)
 
-        q = {
-            "size": 30,
-            "query": {
-                "bool": {
-                    "must": [],
-                    "filter": [
-                        {
-                            "range": {
-                                "date": {"gte": date_range[0], "lte": date_range[1]}
-                            }
-                        }
-                    ],
-                }
-            },
-            "aggs": {
-                "categories": {"terms": {"field": "category.keyword"}},
-                "other_filters": {"significant_text": {"field": "remarks"}},
-                "total_expense": {"sum": {"field": "transaction_amount"}},
-            },
-        }
+        # q = {
+        #     "size": 30,
+        #     "query": {
+        #         "bool": {
+        #             "must": [],
+        #             "filter": [
+        #                 {
+        #                     "range": {
+        #                         "date": {"gte": date_range[0], "lte": date_range[1]}
+        #                     }
+        #                 }
+        #             ],
+        #         }
+        #     },
+        #     "aggs": {
+        #         "categories": {"terms": {"field": "category.keyword"}},
+        #         "other_filters": {"significant_text": {"field": "remarks"}},
+        #         "total_expense": {"sum": {"field": "transaction_amount"}},
+        #     },
+        # }
+
+        must = []
 
         if search:
             search_query = {"match": {"remarks": search}}
 
-            q["query"]["bool"]["must"].append(search_query)
+            must.append(search_query)
 
         if others:
             search_query = {"match": {"remarks": ",".join(others)}}
 
-            q["query"]["bool"]["must"].append(search_query)
+            must.append(search_query)
 
         if categories:
             category_search = {"terms": {"category.keyword": categories}}
 
-            q["query"]["bool"]["must"].append(category_search)
+            must.append(category_search)
+
+        q = {
+            "standard": {
+                "query": {
+                    "bool": {
+                        "must": must,
+                        "filter": [
+                            {
+                                "range": {
+                                    "date": {"gte": date_range[0], "lte": date_range[1]}
+                                }
+                            }
+                        ],
+                    }
+                }
+            }
+        }
+
+        elser = {
+            "standard": {
+                "query": {
+                    "sparse_vector": {
+                        "inference_id": "my-elser-model",
+                        "field": "remarks_embedding",
+                        "query": search,
+                    }
+                }
+            }
+        }
+
+        aggs = {
+            "categories": {"terms": {"field": "category.keyword"}},
+            "other_filters": {"significant_text": {"field": "remarks"}},
+            "total_expense": {"sum": {"field": "transaction_amount"}},
+        }
+
+        final_query = {
+            "retriever": {
+                "rrf": {
+                    "retrievers": [q, elser],
+                    "rank_window_size": 50,
+                    "rank_constant": 20,
+                },
+            },
+            "aggs": aggs,
+            "size": 30,
+        }
+
+        print(final_query)
 
         resp = self.es.search(
-            index="my-expense",
+            index=self._config["elastic"]["index_name"],
             source_includes=["date", "category", "remarks", "transaction_amount"],
-            body=q,
+            body=final_query,
         )
         return resp
 

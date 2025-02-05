@@ -117,6 +117,7 @@ class Parser:
 
         bulk(
             client=self.es,
-            index="my-expense",
+            index=self._config["elastic"]["index_name"],
+            pipeline="elser-embedding-pipeline",
             actions=self.parse(statement=statement, password=password),
         )

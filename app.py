@@ -11,32 +11,34 @@ import os, yaml
 from io import StringIO
 import time
 
+st.title("My Expense")
+
 with open("./config/config.yml", "r") as file:
     config = yaml.safe_load(file)
 
 with st.form("filters"):
-    with st.sidebar:
+    # with st.sidebar:
 
-        today = datetime.datetime.now()
-        prev = today.month - 3
+    today = datetime.datetime.now()
+    prev = today.month - 6
 
-        # Date range picker with custom range
-        three_months_ago = datetime.datetime.now() - timedelta(days=90)
-        min_date = datetime.datetime.now() - timedelta(days=3 * 365)
-        max_date = datetime.datetime.now() + timedelta(days=3 * 365)
+    # Date range picker with custom range
+    three_months_ago = datetime.datetime.now() - timedelta(days=90)
+    min_date = datetime.datetime.now() - timedelta(days=3 * 365)
+    max_date = datetime.datetime.now() + timedelta(days=3 * 365)
 
-        date_range = st.date_input(
-            "Select Date Range:",
-            value=(three_months_ago.date(), datetime.datetime.now().date()),
-            min_value=min_date.date(),
-            max_value=max_date.date(),
-            format="YYYY.MM.DD",
-        )
+    date_range = st.date_input(
+        "Select Date Range:",
+        value=(three_months_ago.date(), datetime.datetime.now().date()),
+        min_value=min_date.date(),
+        max_value=max_date.date(),
+        format="YYYY.MM.DD",
+    )
 
-        start_date = date_range[0].strftime("%Y-%m-%d")
-        end_date = date_range[1].strftime("%Y-%m-%d")
+    start_date = date_range[0].strftime("%Y-%m-%d")
+    end_date = date_range[1].strftime("%Y-%m-%d")
 
-        submit = st.form_submit_button("Submit")
+    submit = st.form_submit_button("Submit")
 
 
 statement_dir = str(pathlib.Path().resolve()) + "/statements/"
@@ -121,7 +123,6 @@ with txn:
 with summary:
 
     reports = l.reports(date_range=[start_date, end_date])
-
     expense_per_month = []
     expense_count = []
     expense_per_category = []
@@ -139,35 +140,17 @@ with summary:
                 {"date": pm["key_as_string"], "count": pm["doc_count"]}
             )
 
-    st.title("Total Expense (Weekly)")
-    st.line_chart(pd.DataFrame(expense_per_month).set_index("date"))
+        st.title("Total Expense (Weekly)")
+        st.line_chart(pd.DataFrame(expense_per_month).set_index("date"))
 
-    st.title("Total Transactions (Weekly)")
-    st.line_chart(pd.DataFrame(expense_count).set_index("date"))
+        st.title("Total Transactions (Weekly)")
+        st.line_chart(pd.DataFrame(expense_count).set_index("date"))
 
 with ask:
 
-    st.header("ask")
+    st.header("Ask")
 
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Accept user input
-    if prompt := st.chat_input("What is up?"):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Display assistant response in chat message container
-        with st.chat_message("assistant"):
-            response = st.write_stream(a.generator(prompt))
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+    messages = st.container(height=400)
+    if prompt := st.chat_input("What was most expensive month?"):
+        messages.chat_message("user").write(prompt)
+        messages.chat_message("assistant").write(a.generator(prompt))

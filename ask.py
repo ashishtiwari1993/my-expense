@@ -81,7 +81,7 @@ class Ask:
 
             {query}
 
-            Just return Query DSL without REST specification (e.g. GET, POST etc.) and json markdown format (e.g. ```json)
+            Just return Query DSL without REST specification (e.g. GET, POST etc.) and json markdown format (e.g. ```json. Just return raw json)
         """
 
         resp = self.open_ai_client.chat.completions.create(
@@ -94,6 +94,8 @@ class Ask:
             ],
             temperature=0,
         )
+
+        print(resp.choices[0].message.content)
 
         return resp.choices[0].message.content
 
