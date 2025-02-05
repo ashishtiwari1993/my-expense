@@ -9,7 +9,7 @@ cp config/sample.config.yml config/config.yml
 
 Update all the credentials.
 
-## Create Elser inference 
+## Create ELSER inference 
 
 ```sh
 PUT _inference/sparse_embedding/my-elser-model
@@ -91,6 +91,14 @@ GET my-expense/_search
                         "medical"
                       ]
                     }
+                  },
+                  {
+                    "range": {
+                      "date": {
+                        "gte": "2024-10-01",
+                        "lte": "2024-12-31"
+                      }
+                    }
                   }
                 ],
                 "must": [
@@ -114,6 +122,14 @@ GET my-expense/_search
                       "category.keyword": [
                         "medical"
                       ]
+                    }
+                  },
+                  {
+                    "range": {
+                      "date": {
+                        "gte": "2024-10-01",
+                        "lte": "2024-12-31"
+                      }
                     }
                   }
                 ],

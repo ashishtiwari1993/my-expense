@@ -43,6 +43,8 @@ class Loader:
 
         date = {"range": {"date": {"gte": date_range[0], "lte": date_range[1]}}}
 
+        filter.append(date)
+
         q = {"standard": {"query": {"bool": {"filter": filter, "must": must}}}}
 
         elser = {
