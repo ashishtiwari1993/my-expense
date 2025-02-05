@@ -15,31 +15,9 @@ class Loader:
             cloud_id=c["elastic"]["cloud_id"], api_key=c["elastic"]["api_key"]
         )
 
-    def load(self, search="", date_range=[], categories=[], others=[]):
+    def load(self, search="", date_range=[], categories=[], others=[], brands=[]):
 
-        # print("search received -" + search)
-
-        # q = {
-        #     "size": 30,
-        #     "query": {
-        #         "bool": {
-        #             "must": [],
-        #             "filter": [
-        #                 {
-        #                     "range": {
-        #                         "date": {"gte": date_range[0], "lte": date_range[1]}
-        #                     }
-        #                 }
-        #             ],
-        #         }
-        #     },
-        #     "aggs": {
-        #         "categories": {"terms": {"field": "category.keyword"}},
-        #         "other_filters": {"significant_text": {"field": "remarks"}},
-        #         "total_expense": {"sum": {"field": "transaction_amount"}},
-        #     },
-        # }
-
+        filter = []
         must = []
 
         if search:
@@ -50,37 +28,35 @@ class Loader:
         if others:
             search_query = {"match": {"remarks": ",".join(others)}}
 
-            must.append(search_query)
+            filter.append(search_query)
 
         if categories:
             category_search = {"terms": {"category.keyword": categories}}
 
-            must.append(category_search)
+            filter.append(category_search)
 
-        q = {
-            "standard": {
-                "query": {
-                    "bool": {
-                        "must": must,
-                        "filter": [
-                            {
-                                "range": {
-                                    "date": {"gte": date_range[0], "lte": date_range[1]}
-                                }
-                            }
-                        ],
-                    }
-                }
-            }
-        }
+        if brands:
+
+            brand_search = {"terms": {"ner.entities.entity.keyword": brands}}
+
+            filter.append(brand_search)
+
+        date = {"range": {"date": {"gte": date_range[0], "lte": date_range[1]}}}
+
+        q = {"standard": {"query": {"bool": {"filter": filter, "must": must}}}}
 
         elser = {
             "standard": {
                 "query": {
-                    "sparse_vector": {
-                        "inference_id": "my-elser-model",
-                        "field": "remarks_embedding",
-                        "query": search,
+                    "bool": {
+                        "filter": filter,
+                        "must": {
+                            "sparse_vector": {
+                                "inference_id": "my-elser-model",
+                                "field": "remarks_embedding",
+                                "query": search,
+                            }
+                        },
                     }
                 }
             }
@@ -88,8 +64,9 @@ class Loader:
 
         aggs = {
             "categories": {"terms": {"field": "category.keyword"}},
-            "other_filters": {"significant_text": {"field": "remarks"}},
+            "other_filters": {"significant_text": {"field": "remarks", "size": 5}},
             "total_expense": {"sum": {"field": "transaction_amount"}},
+            "ner": {"terms": {"field": "ner.entities.entity.keyword", "size": 5}},
         }
 
         final_query = {

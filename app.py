@@ -79,6 +79,7 @@ with txn:
     search_query = st_keyup("Search")
 
     selected_categories = []
+    selected_brands = []
     selected_others = []
 
     data = l.load(
@@ -86,6 +87,7 @@ with txn:
         date_range=[start_date, end_date],
         categories=selected_categories,
         others=selected_others,
+        brands=selected_brands,
     )
 
     with st.sidebar:
@@ -95,18 +97,24 @@ with txn:
             if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
                 selected_categories.append(str(obj["key"]))
 
+        st.title("Brands")
+        for obj in data["aggregations"]["ner"]["buckets"]:
+            if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
+                selected_brands.append(str(obj["key"]))
+
         st.title("Others")
         for obj in data["aggregations"]["other_filters"]["buckets"]:
             if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
                 selected_others.append(str(obj["key"]))
 
-    if selected_categories or selected_others:
+    if selected_categories or selected_others or selected_brands:
 
         data = l.load(
             search=search_query,
             date_range=[start_date, end_date],
             categories=selected_categories,
             others=selected_others,
+            brands=selected_brands,
         )
 
     text = "Found:" + str(data["hits"]["total"]["value"])
