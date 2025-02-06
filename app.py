@@ -76,7 +76,7 @@ with txn:
 
     st.header("Transactions")
 
-    search_query = st_keyup("Search")
+    search_query = st.text_input("e.g. upi payments")
 
     selected_categories = []
     selected_brands = []
@@ -130,13 +130,12 @@ with txn:
 
 with summary:
 
-    reports = l.reports(date_range=[start_date, end_date])
     expense_per_month = []
     expense_count = []
     expense_per_category = []
 
-    reports_expense_pm = reports["aggregations"]["expense_per_month"]["buckets"]
-    reports_expense_pc = reports["aggregations"]["expense_per_category"]["buckets"]
+    reports_expense_pm = data["aggregations"]["expense_per_month"]["buckets"]
+    reports_per_cateogry = data["aggregations"]["expense_per_category"]["buckets"]
 
     if reports_expense_pm:
 
@@ -153,6 +152,16 @@ with summary:
 
         st.title("Total Transactions (Weekly)")
         st.line_chart(pd.DataFrame(expense_count).set_index("date"))
+
+    if reports_per_cateogry:
+
+        for pc in reports_per_cateogry:
+
+            expense_per_category.append(
+                {"category": pc["key"], "amount": pc["total_expense"]["value"]}
+            )
+
+    st.bar_chart(pd.DataFrame(expense_per_category).set_index("category"))
 
 with ask:
 
