@@ -52,6 +52,36 @@ PUT _ingest/pipeline/my-expense-pipeline
           "remarks": "text_field"
         }
       }
+    },
+    {
+      "script": {
+        "lang": "painless",
+        "source": """
+        if (ctx.containsKey("remarks")) {
+          if (ctx.remarks.toLowerCase().contains("imps")) {
+            ctx.category = "transfer";
+          }        
+          if (ctx.remarks.toLowerCase().contains("zomato") || ctx.remarks.toLowerCase().contains("swiggy")) {
+            ctx.category = "food";
+          }
+          if (ctx.remarks.toLowerCase().contains("blinkit") || ctx.remarks.toLowerCase().contains("amazon") || ctx.remarks.toLowerCase().contains("flipkart")) {
+            ctx.category = "shopping";
+          }
+          if (ctx.remarks.toLowerCase().contains("bharti multispe")) {
+            ctx.category = "medical";
+          }
+          if (ctx.remarks.toLowerCase().contains("cred")) {
+            ctx.category = "card_payment";
+          }
+          if (ctx.remarks.toLowerCase().contains("bookmyshow") || ctx.remarks.toLowerCase().contains("airtel")) {
+            ctx.category = "entertainment";
+          }
+          if (ctx.remarks.toLowerCase().contains("savaari")) {
+            ctx.category = "ride";
+          }
+        }  
+        """
+      }
     }
   ]
 }
