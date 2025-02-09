@@ -30,60 +30,47 @@ PUT _inference/sparse_embedding/my-elser-model
 ## Create ingest pipeline
 
 ```sh
-PUT _ingest/pipeline/my-expense-pipeline
+PUT my-expense
 {
-  "processors": [
-    {
-      "inference": {
-        "model_id": "my-elser-model",
-        "input_output": [
-          {
-            "input_field": "remarks",
-            "output_field": "remarks_embedding"
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "shingle_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "shingle_filter"
+            ]
           }
-        ]
-      }
-    },
-    {
-      "inference": {
-        "model_id": "elastic__distilbert-base-uncased-finetuned-conll03-english",
-        "target_field": "ner",
-        "field_map": {
-          "remarks": "text_field"
+        },
+        "filter": {
+          "shingle_filter": {
+            "type": "shingle",
+            "min_shingle_size": 2,
+            "max_shingle_size": 3
+          }
         }
       }
-    },
-    {
-      "script": {
-        "lang": "painless",
-        "source": """
-        if (ctx.containsKey("remarks")) {
-          if (ctx.remarks.toLowerCase().contains("imps")) {
-            ctx.category = "transfer";
-          }        
-          if (ctx.remarks.toLowerCase().contains("zomato") || ctx.remarks.toLowerCase().contains("swiggy")) {
-            ctx.category = "food";
+    }
+  },
+  "mappings": {
+    "properties": {
+      "remarks_embedding": {
+        "type": "sparse_vector"
+      },
+      "remarks": {
+        "type": "text",
+        "fields": {
+          "suggest": {
+            "type": "text",
+            "analyzer": "shingle_analyzer"
           }
-          if (ctx.remarks.toLowerCase().contains("blinkit") || ctx.remarks.toLowerCase().contains("amazon") || ctx.remarks.toLowerCase().contains("flipkart")) {
-            ctx.category = "shopping";
-          }
-          if (ctx.remarks.toLowerCase().contains("bharti multispe")) {
-            ctx.category = "medical";
-          }
-          if (ctx.remarks.toLowerCase().contains("cred")) {
-            ctx.category = "card_payment";
-          }
-          if (ctx.remarks.toLowerCase().contains("bookmyshow") || ctx.remarks.toLowerCase().contains("airtel")) {
-            ctx.category = "entertainment";
-          }
-          if (ctx.remarks.toLowerCase().contains("savaari")) {
-            ctx.category = "ride";
-          }
-        }  
-        """
+        }
       }
     }
-  ]
+  }
 }
 ```
 
@@ -205,4 +192,17 @@ GET my-expense/_search
   },
   "size": 30
 }
+```
+
+## Install streamlit
+
+```sh
+pip install streamlit
+pip install streamlit-searchbox
+```
+
+## Run
+
+```sh
+streamlit run app.py
 ```

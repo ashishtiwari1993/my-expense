@@ -15,6 +15,38 @@ class Loader:
             cloud_id=c["elastic"]["cloud_id"], api_key=c["elastic"]["api_key"]
         )
 
+    def suggest(self, search=""):
+
+        body = {
+            "suggest": {
+                "text": search,
+                "simple_phrase": {
+                    "phrase": {
+                        "field": "remarks.suggest",
+                        "size": 5,
+                        "gram_size": 3,
+                        "direct_generator": [
+                            {"field": "remarks.suggest", "suggest_mode": "always"}
+                        ],
+                    }
+                },
+            }
+        }
+
+        resp = self.es.search(
+            index=self._config["elastic"]["index_name"],
+            body=body,
+        )
+
+        suggestions = []
+
+        for phrase in resp["suggest"]["simple_phrase"]:
+            if phrase["options"]:
+                for s in phrase["options"]:
+                    suggestions.append(s["text"])
+
+        return suggestions
+
     def load(self, search="", date_range=[], categories=[], others=[], brands=[]):
 
         filter = []
@@ -95,7 +127,7 @@ class Loader:
             "size": 50,
         }
 
-        print(final_query)
+        # print(final_query)
 
         resp = self.es.search(
             index=self._config["elastic"]["index_name"],

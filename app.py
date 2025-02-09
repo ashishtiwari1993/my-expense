@@ -10,6 +10,8 @@ from datetime import timedelta
 import os, yaml
 from io import StringIO
 import time
+from streamlit_searchbox import st_searchbox
+import uuid
 
 st.title("My Expense")
 
@@ -23,7 +25,7 @@ with st.form("filters"):
     prev = today.month - 6
 
     # Date range picker with custom range
-    three_months_ago = datetime.datetime.now() - timedelta(days=90)
+    three_months_ago = datetime.datetime.now() - timedelta(days=365)
     min_date = datetime.datetime.now() - timedelta(days=3 * 365)
     max_date = datetime.datetime.now() + timedelta(days=3 * 365)
 
@@ -51,6 +53,7 @@ p = Parser()
 l = Loader()
 a = Ask()
 
+
 with upload:
 
     st.header("Upload PDF account statement")
@@ -76,7 +79,16 @@ with txn:
 
     st.header("Transactions")
 
-    search_query = st.text_input("e.g. upi payments")
+    # search_query = st.text_input("e.g. upi payments")
+
+    search_query = st_searchbox(
+        l.suggest, placeholder="e.g. upi zomato", key=5, default_use_searchterm=True
+    )
+
+    print(search_query)
+
+    if not search_query:
+        search_query = ""
 
     selected_categories = []
     selected_brands = []
@@ -94,17 +106,26 @@ with txn:
 
         st.title("Categories")
         for obj in data["aggregations"]["categories"]["buckets"]:
-            if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
+            if st.checkbox(
+                str(obj["key"]) + " (" + str(obj["doc_count"]) + ")",
+                key=str(uuid.uuid4()),
+            ):
                 selected_categories.append(str(obj["key"]))
 
         st.title("Brands")
         for obj in data["aggregations"]["ner"]["buckets"]:
-            if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
+            if st.checkbox(
+                str(obj["key"]) + " (" + str(obj["doc_count"]) + ")",
+                key=str(uuid.uuid4()),
+            ):
                 selected_brands.append(str(obj["key"]))
 
         st.title("Others")
         for obj in data["aggregations"]["other_filters"]["buckets"]:
-            if st.checkbox(str(obj["key"]) + " (" + str(obj["doc_count"]) + ")"):
+            if st.checkbox(
+                str(obj["key"]) + " (" + str(obj["doc_count"]) + ")",
+                key=str(uuid.uuid4()),
+            ):
                 selected_others.append(str(obj["key"]))
 
     if selected_categories or selected_others or selected_brands:
@@ -161,7 +182,7 @@ with summary:
                 {"category": pc["key"], "amount": pc["total_expense"]["value"]}
             )
 
-    st.bar_chart(pd.DataFrame(expense_per_category).set_index("category"))
+        st.bar_chart(pd.DataFrame(expense_per_category).set_index("category"))
 
 with ask:
 
