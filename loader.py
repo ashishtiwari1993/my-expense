@@ -127,7 +127,7 @@ class Loader:
             "size": 50,
         }
 
-        # print(final_query)
+        print(final_query)
 
         resp = self.es.search(
             index=self._config["elastic"]["index_name"],

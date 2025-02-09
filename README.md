@@ -1,6 +1,19 @@
 # my-expense
 Analyze your bank account statement and get insights.
 
+## Install streamlit
+
+```sh
+pip install streamlit
+pip install streamlit-searchbox
+```
+
+## Run
+
+```sh
+streamlit run app.py
+```
+
 ## Create `config.yml`
 
 ```sh
@@ -30,13 +43,73 @@ PUT _inference/sparse_embedding/my-elser-model
 ## Create ingest pipeline
 
 ```sh
+PUT _ingest/pipeline/my-expense-pipeline
+{
+  "processors": [
+    {
+      "inference": {
+        "model_id": "my-elser-model",
+        "input_output": [
+          {
+            "input_field": "remarks",
+            "output_field": "remarks_embedding"
+          }
+        ]
+      }
+    },
+    {
+      "inference": {
+        "model_id": "elastic__distilbert-base-uncased-finetuned-conll03-english",
+        "target_field": "ner",
+        "field_map": {
+          "remarks": "text_field"
+        }
+      }
+    },
+    {
+      "script": {
+        "lang": "painless",
+        "source": """
+        if (ctx.containsKey("remarks")) {
+          if (ctx.remarks.toLowerCase().contains("imps")) {
+            ctx.category = "transfer";
+          }        
+          if (ctx.remarks.toLowerCase().contains("zomato") || ctx.remarks.toLowerCase().contains("swiggy")) {
+            ctx.category = "food";
+          }
+          if (ctx.remarks.toLowerCase().contains("blinkit") || ctx.remarks.toLowerCase().contains("amazon") || ctx.remarks.toLowerCase().contains("flipkart")) {
+            ctx.category = "shopping";
+          }
+          if (ctx.remarks.toLowerCase().contains("bharti multispe")) {
+            ctx.category = "medical";
+          }
+          if (ctx.remarks.toLowerCase().contains("cred")) {
+            ctx.category = "card_payment";
+          }
+          if (ctx.remarks.toLowerCase().contains("bookmyshow") || ctx.remarks.toLowerCase().contains("airtel")) {
+            ctx.category = "entertainment";
+          }
+          if (ctx.remarks.toLowerCase().contains("savaari")) {
+            ctx.category = "ride";
+          }
+        }  
+        """
+      }
+    }
+  ]
+}
+```
+
+## Create an Index
+
+```sh
 PUT my-expense
 {
   "settings": {
     "index": {
       "analysis": {
         "analyzer": {
-          "shingle_analyzer": {
+          "suggest_analyzer": {
             "type": "custom",
             "tokenizer": "standard",
             "filter": [
@@ -65,24 +138,9 @@ PUT my-expense
         "fields": {
           "suggest": {
             "type": "text",
-            "analyzer": "shingle_analyzer"
+            "analyzer": "suggest_analyzer"
           }
         }
-      }
-    }
-  }
-}
-```
-
-## Create an Index
-
-```sh
-PUT my-expense
-{
-  "mappings": {
-    "properties": {
-      "remarks_embedding": { 
-        "type": "sparse_vector" 
       }
     }
   }
@@ -103,17 +161,10 @@ GET my-expense/_search
               "bool": {
                 "filter": [
                   {
-                    "terms": {
-                      "category.keyword": [
-                        "medical"
-                      ]
-                    }
-                  },
-                  {
                     "range": {
                       "date": {
-                        "gte": "2024-10-01",
-                        "lte": "2024-12-31"
+                        "gte": "2024-02-10",
+                        "lte": "2025-02-09"
                       }
                     }
                   }
@@ -121,7 +172,7 @@ GET my-expense/_search
                 "must": [
                   {
                     "match": {
-                      "remarks": "dr amita"
+                      "remarks": "coffee expense"
                     }
                   }
                 ]
@@ -135,17 +186,10 @@ GET my-expense/_search
               "bool": {
                 "filter": [
                   {
-                    "terms": {
-                      "category.keyword": [
-                        "medical"
-                      ]
-                    }
-                  },
-                  {
                     "range": {
                       "date": {
-                        "gte": "2024-10-01",
-                        "lte": "2024-12-31"
+                        "gte": "2024-02-10",
+                        "lte": "2025-02-09"
                       }
                     }
                   }
@@ -154,7 +198,7 @@ GET my-expense/_search
                   "sparse_vector": {
                     "inference_id": "my-elser-model",
                     "field": "remarks_embedding",
-                    "query": "dr amita"
+                    "query": "coffee expense"
                   }
                 }
               }
@@ -162,7 +206,7 @@ GET my-expense/_search
           }
         }
       ],
-      "rank_window_size": 50,
+      "rank_window_size": 70,
       "rank_constant": 20
     }
   },
@@ -188,21 +232,34 @@ GET my-expense/_search
         "field": "ner.entities.entity.keyword",
         "size": 5
       }
+    },
+    "expense_per_month": {
+      "date_histogram": {
+        "field": "date",
+        "calendar_interval": "week",
+        "format": "yyyy-MM-dd"
+      },
+      "aggs": {
+        "expense_amount": {
+          "sum": {
+            "field": "transaction_amount"
+          }
+        }
+      }
+    },
+    "expense_per_category": {
+      "terms": {
+        "field": "category.keyword"
+      },
+      "aggs": {
+        "total_expense": {
+          "sum": {
+            "field": "transaction_amount"
+          }
+        }
+      }
     }
   },
-  "size": 30
+  "size": 50
 }
-```
-
-## Install streamlit
-
-```sh
-pip install streamlit
-pip install streamlit-searchbox
-```
-
-## Run
-
-```sh
-streamlit run app.py
 ```
