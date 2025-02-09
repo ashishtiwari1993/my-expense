@@ -63,7 +63,28 @@ class Ask:
                     }
                 }
 
-            2. Query - Where I spend a lot of money
+            2. User Query - Where I spend a lot of money
+
+            Elasticsearch query DSL  =>  {
+                "size": 0,
+                "aggs": {
+                    "highest_spending_category": {
+                    "terms": {
+                        "field": "category.keyword",
+                        "order": {
+                        "total_spending": "desc"
+                        }
+                    },
+                    "aggs": {
+                        "total_spending": {
+                        "sum": {
+                            "field": "transaction_amount"
+                        }
+                        }
+                    }
+                    }
+                }
+            }
 
 
         """
@@ -73,6 +94,13 @@ class Ask:
 
             Index mapping:
             {mapping}
+
+            field descriptions:
+            date: query on this for date range filter
+            transaction_amount: total money spent.
+            transaction_type: this could be debit or credit
+            category: this could be food, ride, transfer (which mean personal transfer), card_payment (credit card re payments), hotel (expense for stay or hotels), entertainment, medical, shopping
+            remarks: If not finding any appropriate field, hit all search query in lowercase on `remarks`. It is the full text search field.
 
             Reference elasticsearch document:
             {sample_doc}
@@ -95,7 +123,7 @@ class Ask:
             temperature=0,
         )
 
-        print(resp.choices[0].message.content)
+        # print(resp.choices[0].message.content)
 
         return resp.choices[0].message.content
 
@@ -157,7 +185,7 @@ class Ask:
         messages.append(
             {
                 "role": "system",
-                "content": "If no data received from any function. Just say there is issue fetching details from function(function_name).",
+                "content": "All the money transaction is happening in INR. If no data received from any function. Just say there is issue fetching details from function(function_name).",
             }
         )
 

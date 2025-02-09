@@ -85,8 +85,6 @@ with txn:
         l.suggest, placeholder="e.g. upi zomato", key=5, default_use_searchterm=True
     )
 
-    print(search_query)
-
     if not search_query:
         search_query = ""
 
