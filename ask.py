@@ -149,7 +149,7 @@ class Ask:
                 "type": "function",
                 "function": {
                     "name": "fetch_from_elasticsearch",
-                    "description": "All trasactions related data is stored into Elasticsearch in INR. Call this function if receiving any query around transactions like expense, expenses category etc. .",
+                    "description": "All trasactions related data is stored into Elasticsearch in INR. Call this function if receiving any query around transactions like expense, expenses category etc.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -185,7 +185,7 @@ class Ask:
         messages.append(
             {
                 "role": "system",
-                "content": "All the money transaction is happening in INR. If no data received from any function. Just say there is issue fetching details from function(function_name).",
+                "content": "All the money transaction is happening in INR. If any error received from any function. Just say there is issue fetching details from function(function_name). OR if received empty data, just say there is no data available for given date range.",
             }
         )
 

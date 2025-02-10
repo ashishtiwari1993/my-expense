@@ -14,19 +14,13 @@ pip install streamlit
 pip install streamlit-searchbox
 ```
 
-## Run
+## Setup Ollama
 
+1. [Install](https://ollama.com/download) Ollama
+2. Run Llama 3.1
 ```sh
-streamlit run app.py
+ollama run llama3.1
 ```
-
-## Create `config.yml`
-
-```sh
-cp config/sample.config.yml config/config.yml
-```
-
-Update all the credentials.
 
 ## Create ELSER inference 
 
@@ -268,4 +262,19 @@ GET my-expense/_search
   },
   "size": 50
 }
+```
+
+
+## Create `config.yml`
+
+```sh
+cp config/sample.config.yml config/config.yml
+```
+
+Update all the credentials.
+
+## Run
+
+```sh
+streamlit run app.py
 ```
