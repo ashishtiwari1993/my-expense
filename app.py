@@ -85,8 +85,6 @@ with txn:
         l.suggest, placeholder="e.g. upi zomato", key=5, default_use_searchterm=True
     )
 
-    print(search_query)
-
     if not search_query:
         search_query = ""
 
@@ -189,6 +187,6 @@ with ask:
     st.header("Ask")
 
     messages = st.container(height=400)
-    if prompt := st.chat_input("What was most expensive month?"):
+    if prompt := st.chat_input("Which was the most expensive month?"):
         messages.chat_message("user").write(prompt)
         messages.chat_message("assistant").write(a.generator(prompt))
